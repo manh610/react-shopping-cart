@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import 'antd/dist/antd.css';
-import { Image, Form, Input, Button, Checkbox } from 'antd';
+import { Image, Form, Input, Button, Checkbox, Row, Col } from 'antd';
 import './style.css'
-import { useDispatch, useSelector } from 'react-redux';
 import {toast} from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { selectUserId, updateUserId } from  '../../redux/reducer';
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
+import { userService } from '../../service/user';
 
 
 const Login = () => {
@@ -15,35 +14,37 @@ const Login = () => {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
 
-    const dispatch = useDispatch();
-
     const navigate = useNavigate();
 
     toast.configure();
 
-    const userId = useSelector(selectUserId);
-    
     const checkLogin = async () => {
+        console.log(username)
+        console.log(password)
         let response;
-        await axios.get(`http://localhost:3006/user?username=${username}&password=${password}`)
-            .then( res => {
+        let code = 222;
+        await axios.post(`http://localhost:2002/teachers/login`, {
+            username: username,
+            password: password
+        }).then( res => {
                 response = res.data;
-                console.log(response);
+                code = 200
             })
-            .catch(error => console.log(error));
-        if (response.length !== 0 ) {
+            .catch(error => {
+                code = 404
+            });
+        console.log(code)
+        if (code == 200 ) {
             notify('success');
-            const user = response[0].id;
-            dispatch(updateUserId(user));
-            navigate("/shop");
+            const user = response.data;
+            userService.set(user);
+            navigate('/manage')
         } else {
             notify("fail");
         }
         return response;
     }
 
-    useEffect ( () => {
-    }, [userId])
 
     const notify = (info) => {
         switch(info) {
@@ -58,86 +59,35 @@ const Login = () => {
         }
     }
 
-    const onFinish = (values) => {
-    };
-
-    const onFinishFailed = (errorInfo) => {
-    };
+    const login = () => {
+        checkLogin()
+    }
 
     return ( 
-        <> 
-        < div className = 'Login' >
-            <Image className = 'logo'src = 'image/Logo.jpg' />
-        </div> 
-        <div>
-        <Form className = 'form'
-            name = "basic"
-            labelCol = {
-                {
-                    span: 8,
-                }
-            }
-            wrapperCol = {
-                {
-                    span: 15,
-                }
-            }
-            initialValues = {
-                {
-                    remember: true,
-                }
-            }
-            onFinish = { onFinish }
-            onFinishFailed = { onFinishFailed }
-            autoComplete = "off" >
-            <Form.Item label = "Username"  name = "username"
-                rules = {
-                    [{
-                        required: true,
-                        message: 'Please input your username!',
-                    }, ]
-                } >
-                <Input onChange={(e) => setUsername(e.target.value)} />
-            </Form.Item>
-
-            <Form.Item label = "Password"
-                name = "password"
-                rules = {
-                    [{
-                        required: true,
-                        message: 'Please input your password!',
-                    }, ]
-                }>
-                <Input.Password onChange={(e) => setPassword(e.target.value)} />
-            </Form.Item>
-
-            <Form.Item name = "remember"
-            valuePropName = "checked"
-            wrapperCol = {
-                {
-                    offset: 8,
-                    span: 16,
-                }
-            } >
-                <Checkbox> Remember me </Checkbox> 
-            </Form.Item>
-            <Form.Item wrapperCol = {
-                {
-                    offset: 8,
-                    span: 16,
-                }
-            }>
-                <Button className = 'btn'
-                    type = "primary"
-                    htmlType = "submit"
-                    onClick={() => checkLogin()}
-                    // href='/shop'
-                    > Submit 
-                </Button> 
-            </Form.Item> 
-        </Form> 
-        </div> 
-        </>
+        <div className = 'all'> 
+            < div className = 'header' >
+                <Image className = 'logo' src = 'image/sv_header_login.png' preview = {false} />
+            </div> 
+            <Row className='content'>
+                <Col span={18}></Col>
+                <Col span={6} className='form'>
+                    <div className='a'>
+                        <Row>
+                            <h3 className='title-a'>QUẢN LÍ ĐIỂM DANH SINH VIÊN</h3>
+                        </Row>
+                        <Row>
+                            <p className='title-b'>ĐĂNG NHẬP HỆ THỐNG</p>
+                        </Row>
+                        <Input onChange={(e) => setUsername(e.target.value)} className='input-username' placeholder="Nhập tên tài khoản" />
+                        <Input onChange={(e) => setPassword(e.target.value)} className='input-pass' placeholder="Nhập mật khẩu" type='password' />
+                        <div className='btn-login' onClick={() => login()}>
+                            <p className='text-btn'>ĐĂNG NHẬP</p>
+                        </div>
+                    </div>
+                </Col>
+            </Row>
+            
+        </div>
     );
 }
 
